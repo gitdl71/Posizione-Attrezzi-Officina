@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Officina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F4F0;
+    --surface: #FFFFFF;
+    --border: #E0DED8;
+    --border-strong: #C8C6BF;
+    --text: #1A1916;
+    --text-muted: #6B6960;
+    --accent: #1A1916;
+    --accent-fg: #F5F4F0;
+    --tag-bg: #ECEAE4;
+    --tag-text: #3A3830;
+    --code-bg: #ECEAE4;
+    --red: #C0392B;
+    --green: #27503A;
+    --radius: 6px;
+    --radius-lg: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  .app {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .header-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* Nav tabs */
+  .nav {
+    display: flex;
+    gap: 0;
+    padding: 16px 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-btn {
+    padding: 8px 16px;
+    border: none;
+    background: none;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color .15s;
+  }
+  .nav-btn.active {
+    color: var(--text);
+    border-bottom-color: var(--text);
+  }
+
+  /* Content */
+  .content { padding: 20px; flex: 1; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Search */
+  .search-wrap {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .search-input {
+    flex: 1;
+    padding: 11px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .search-input:focus { border-color: var(--text); }
+  .search-input::placeholder { color: var(--text-muted); }
+
+  .btn {
+    padding: 11px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--text);
+    white-space: nowrap;
+    transition: background .12s;
+  }
+  .btn:active { background: var(--tag-bg); }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-color: var(--accent);
+  }
+  .btn-primary:active { background: #333; }
+  .btn-sm { padding: 6px 10px; font-size: 12px; }
+  .btn-ghost { border-color: transparent; background: transparent; }
+  .btn-danger { color: var(--red); border-color: transparent; background: transparent; }
+
+  /* Result card */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    margin-bottom: 8px;
+    transition: border-color .15s;
+  }
+  .result-card:active { border-color: var(--border-strong); }
+  .result-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .result-name {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .result-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .pos-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--tag-text);
+    margin-bottom: 8px;
+  }
+  .pos-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: 4px;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .tags-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag {
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    border-radius: 20px;
+    padding: 2px 9px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .result-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Empty / status */
+  .empty { text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 14px; }
+  .empty-icon { font-size: 32px; margin-bottom: 12px; }
+  .status-bar {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* Form */
+  .form-section { margin-bottom: 20px; }
+  .form-section-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .form-group { margin-bottom: 12px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .form-input, .form-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color .15s;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--text); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Position select group */
+  .pos-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Checkbox grid for categories */
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 6px;
+  }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    background: var(--surface);
+    transition: border-color .12s, background .12s;
+    user-select: none;
+  }
+  .checkbox-item:active { background: var(--tag-bg); }
+  .checkbox-item.checked {
+    border-color: var(--text);
+    background: var(--text);
+    color: var(--accent-fg);
+  }
+  .checkbox-item input { display: none; }
+  .checkbox-label { font-size: 13px; font-weight: 500; }
+
+  /* Form actions */
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    padding-bottom: 40px;
+  }
+  .form-actions .btn { flex: 1; padding: 13px; font-size: 14px; }
+
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--text);
+    color: var(--accent-fg);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: transform .25s ease;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Config screen */
+  .config-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .config-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+  .config-url {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    word-break: break-all;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+  .config-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); }
+  .dot.ok { background: #27503A; }
+  .dot.err { background: var(--red); }
+
+  @media (max-width: 400px) {
+    .checkbox-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+    .pos-group { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-title">officina</div>
+    <div class="header-sub" id="item-count">—</div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="switchTab('cerca')">Cerca</button>
+    <button class="nav-btn" onclick="switchTab('aggiungi')">Aggiungi</button>
+    <button class="nav-btn" onclick="switchTab('config')">Config</button>
+  </div>
+
+  <div class="content">
+
+    <!-- CERCA -->
+    <div id="sec-cerca" class="section active">
+      <div class="search-wrap">
+        <input type="search" class="search-input" id="search-input"
+          placeholder="nome, codice, categoria..."
+          oninput="doSearch()" autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="btn" onclick="doSearch()">Cerca</button>
+      </div>
+      <div id="search-status" class="status-bar"></div>
+      <div id="results-list">
+        <div class="empty">
+          <div class="empty-icon">🔍</div>
+          Scrivi qualcosa per cercare
+        </div>
+      </div>
+    </div>
+
+    <!-- AGGIUNGI -->
+    <div id="sec-aggiungi" class="section">
+      <div id="edit-banner" style="display:none; background:#FAEEDA; border:1px solid #FAC775; border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:#633806; display:none; justify-content:space-between; align-items:center;">
+        <span>Modalità modifica</span>
+        <button class="btn btn-sm" onclick="resetForm()">Annulla</button>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Oggetto</div>
+        <div class="form-group">
+          <label class="form-label">Nome *</label>
+          <input class="form-input" id="f-nome" placeholder="es. Chiave inglese 32mm" autocomplete="off">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Quantità</label>
+            <input class="form-input" id="f-qty" type="number" min="0" value="1" placeholder="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unità</label>
+            <select class="form-select" id="f-unita">
+              <option value="pz">pz</option>
+              <option value="m">m</option>
+              <option value="cm">cm</option>
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="l">l</option>
+              <option value="ml">ml</option>
+              <option value="fogli">fogli</option>
+              <option value="rotoli">rotoli</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dimensioni (facoltativo)</label>
+          <input class="form-input" id="f-dim" placeholder="es. 32mm, 1m x 2m, M8">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Note (facoltativo)</label>
+          <input class="form-input" id="f-note" placeholder="marca, modello, stato...">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Posizione</div>
+        <div class="pos-group">
+          <div class="form-group">
+            <label class="form-label">Zona</label>
+            <select class="form-select" id="f-zona" onchange="updateContenitore()">
+              <option value="">— seleziona —</option>
+              <option value="Pareti">Pareti</option>
+              <option value="Porte">Porte</option>
+              <option value="French Cleat & Pannelli">French Cleat & Pannelli</option>
+              <option value="Cassetti">Cassetti</option>
+              <option value="Banchi">Banchi</option>
+              <option value="Rack & Ripiani">Rack & Ripiani</option>
+              <option value="Box & Contenitori">Box & Contenitori</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Posizione</label>
+            <select class="form-select" id="f-pos">
+              <option value="">— prima la zona —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Categorie</div>
+        <div class="checkbox-grid" id="cat-grid"></div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn" onclick="resetForm()">Pulisci</button>
+        <button class="btn btn-primary" onclick="saveItem()">Salva</button>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="sec-config" class="section">
+      <div class="config-block">
+        <div class="config-label">URL Google Apps Script</div>
+        <input class="form-input" id="cfg-url" placeholder="https://script.google.com/macros/s/..." style="margin-top:6px; font-size:13px; font-family:'IBM Plex Mono',monospace;">
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn btn-primary btn-sm" onclick="saveConfig()">Salva</button>
+          <button class="btn btn-sm" onclick="testConnection()">Test connessione</button>
+        </div>
+        <div class="config-status" id="conn-status"></div>
+      </div>
+      <div class="config-block">
+        <div class="config-label">Istruzioni</div>
+        <div style="font-size:13px; color:var(--text-muted); line-height:1.7; margin-top:4px;">
+          1. Crea un Google Sheet con le colonne:<br>
+          <code style="font-family:'IBM Plex Mono',monospace; font-size:11px; background:var(--code-bg); padding:4px 8px; border-radius:4px; display:inline-block; margin:6px 0;">id, nome, qty, unita, dimensioni, zona, posizione, pos_codice, categorie, note, data</code><br>
+          2. Vai su <strong>Estensioni → Apps Script</strong><br>
+          3. Incolla il codice server (vedi README del repo)<br>
+          4. Distribuisci come app web → chiunque<br>
+          5. Copia l'URL qui sopra
+        </div>
+      </div>
+      <div class="config-block">
+        <div class="config-label">Dati locali</div>
+        <div style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Cache locale: <span id="cache-count">—</span> elementi</div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-sm" onclick="refreshCache()">Aggiorna cache</button>
+          <button class="btn btn-sm btn-danger" onclick="clearCache()">Cancella cache</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const POSITIONS = {
+  'Pareti': [
+    {code:'LP', label:'LP — Parete Lato Pisa'},
+    {code:'LM', label:'LM — Parete Lato Mare'},
+    {code:'LL', label:'LL — Parete Lato Lago'},
+    {code:'LV', label:'LV — Parete Lato Viareggio'},
+  ],
+  'Porte': [
+    {code:'P1', label:'P1 — Porta LP (fissa)'},
+    {code:'P2', label:'P2 — Porta LP (apertura)'},
+    {code:'P3', label:'P3 — Porta LP (mezzo)'},
+    {code:'P4', label:'P4 — Porta LM'},
+  ],
+  'French Cleat & Pannelli': [
+    {code:'FC1', label:'FC1 — French Cleat 1 (LM-LP)'},
+    {code:'FC2', label:'FC2 — French Cleat 2 (LM-LV)'},
+    {code:'MLM', label:'MLM — Mensola LM'},
+    {code:'PLM', label:'PLM — Pannello LM (Pegboard)'},
+  ],
+  'Cassetti': [
+    {code:'C1', label:'C1 — Cassetto 1'},
+    {code:'C2', label:'C2 — Cassetto 2'},
+    {code:'C3', label:'C3 — Cassetto 3'},
+    {code:'C4', label:'C4 — Cassetto 4'},
+  ],
+  'Banchi': [
+    {code:'BLP', label:'BLP — Banco LP'},
+    {code:'BLV', label:'BLV — Banco LV'},
+  ],
+  'Rack & Ripiani': [
+    {code:'RLV',   label:'RLV — Rack LV'},
+    {code:'RLL1',  label:'RLL1 — Rack LL1 (primo da sx)'},
+    {code:'RLL2',  label:'RLL2 — Rack LL2 (secondo da sx)'},
+    {code:'RLL3',  label:'RLL3 — Rack LL3 (terzo da sx)'},
+    {code:'RLV.1', label:'RLV.1 — Piano Rack 1 (alto)'},
+    {code:'RLV.2', label:'RLV.2 — Piano Rack 2 (mezzano)'},
+    {code:'RLV.3', label:'RLV.3 — Piano Rack 3 (mezzano)'},
+    {code:'RLV.4', label:'RLV.4 — Piano Rack 4 (basso)'},
+  ],
+  'Box & Contenitori': [
+    {code:'B1',  label:'B1 — Box supporti'},
+    {code:'B2',  label:'B2 — Box Dremel'},
+    {code:'V1',  label:'V1 — Box Elettricità 1'},
+    {code:'V2',  label:'V2 — Box Elettricità 2'},
+    {code:'V3',  label:'V3 — Box Elettricità 3'},
+    {code:'RB',  label:'RB — Rack Bombolette'},
+    {code:'W1',  label:'W1 — Box Wrangler 1'},
+    {code:'W2',  label:'W2 — Box Wrangler 2'},
+    {code:'W3',  label:'W3 — Box Wrangler 3'},
+    {code:'G1',  label:'G1 — Piccolo grigio'},
+    {code:'D1',  label:'D1 — Box Liquidi restauro'},
+    {code:'D2',  label:'D2 — Box Accessori'},
+    {code:'D3',  label:'D3 — Box Accessori 2'},
+  ]
+};
+
+const CATEGORIES = [
+  'Viteria','Bulloneria','Restauro','Saldatura','Elettricità',
+  'Elettronica','Ferro','Idraulica','Laboratorio','Motori',
+  'Verniciatura','Woodworking','Attrezzi','Wrangler',
+  'Progetti da fare','Aria compressa','Varie','Carpenteria','Muratura'
+];
+
+let selectedCats = new Set();
+let editId = null;
+let cachedItems = [];
+let scriptUrl = localStorage.getItem('officina_url') || '';
+
+function init() {
+  buildCatGrid();
+  if (scriptUrl) document.getElementById('cfg-url').value = scriptUrl;
+  loadCache();
+  updateCacheCount();
+}
+
+function buildCatGrid() {
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = CATEGORIES.map(c => `
+    <div class="checkbox-item" id="cat-${c}" onclick="toggleCat('${c}')">
+      <input type="checkbox" value="${c}">
+      <span class="checkbox-label">${c}</span>
+    </div>
+  `).join('');
+}
+
+function toggleCat(c) {
+  if (selectedCats.has(c)) {
+    selectedCats.delete(c);
+    document.getElementById('cat-'+c).classList.remove('checked');
+  } else {
+    selectedCats.add(c);
+    document.getElementById('cat-'+c).classList.add('checked');
+  }
+}
+
+function updateContenitore() {
+  const zona = document.getElementById('f-zona').value;
+  const sel = document.getElementById('f-pos');
+  sel.innerHTML = '';
+  if (!zona || !POSITIONS[zona]) {
+    sel.innerHTML = '<option value="">— prima la zona —</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">— seleziona —</option>' +
+    POSITIONS[zona].map(p => `<option value="${p.code}">${p.label}</option>`).join('');
+}
+
+function switchTab(t) {
+  document.querySelectorAll('.nav-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['cerca','aggiungi','config'][i] === t);
+  });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  if (t === 'cerca' && cachedItems.length === 0 && scriptUrl) loadCache();
+}
+
+// ---- SEARCH ----
+function doSearch() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  const list = document.getElementById('results-list');
+  const status = document.getElementById('search-status');
+
+  if (!q) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>Scrivi qualcosa per cercare</div>';
+    status.textContent = '';
+    return;
+  }
+
+  const results = cachedItems.filter(item => {
+    const cats = (item.categorie || '').toLowerCase();
+    const pos = (item.posizione || '').toLowerCase();
+    const code = (item.pos_codice || '').toLowerCase();
+    return (item.nome||'').toLowerCase().includes(q)
+      || cats.includes(q)
+      || pos.includes(q)
+      || code.includes(q)
+      || (item.note||'').toLowerCase().includes(q)
+      || (item.dimensioni||'').toLowerCase().includes(q);
+  });
+
+  status.textContent = results.length
+    ? `${results.length} risultat${results.length===1?'o':'i'} per "${q}"`
+    : '';
+
+  if (!results.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div>Nessun risultato per "<strong>${q}</strong>"</div>`;
+    return;
+  }
+
+  list.innerHTML = results.map(item => {
+    const cats = item.categorie ? item.categorie.split(',').map(c =>
+      `<span class="tag">${c.trim()}</span>`).join('') : '';
+    const posCode = item.pos_codice || '';
+    const posLabel = item.posizione || '';
+    const qty = item.qty ? `${item.qty} ${item.unita||'pz'}` : '';
+    const dim = item.dimensioni ? ` · ${item.dimensioni}` : '';
+    return `
+      <div class="result-card">
+        <div class="result-top">
+          <div class="result-name">${item.nome}</div>
+          <div class="result-actions">
+            <button class="btn btn-sm btn-ghost" onclick="editItem('${item.id}')">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteItem('${item.id}')">✕</button>
+          </div>
+        </div>
+        ${posCode ? `<div class="pos-badge"><strong>${posCode}</strong><span class="pos-desc">${posLabel}</span></div>` : ''}
+        ${qty ? `<div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">${qty}${dim}</div>` : ''}
+        ${cats ? `<div class="tags-row">${cats}</div>` : ''}
+        ${item.note ? `<div style="font-size:12px; color:var(--text-muted); margin-top:6px;">${item.note}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ---- SAVE ----
+async function saveItem() {
+  const nome = document.getElementById('f-nome').value.trim();
+  if (!nome) { toast('Inserisci il nome'); return; }
+  const posCode = document.getElementById('f-pos').value;
+  const zona = document.getElementById('f-zona').value;
+  const posLabel = posCode
+    ? (POSITIONS[zona]||[]).find(p=>p.code===posCode)?.label.split('—')[1]?.trim() || posCode
+    : '';
+
+  const item = {
+    id: editId || Date.now().toString(),
+    nome,
+    qty: document.getElementById('f-qty').value || '1',
+    unita: document.getElementById('f-unita').value,
+    dimensioni: document.getElementById('f-dim').value.trim(),
+    zona,
+    posizione: posLabel,
+    pos_codice: posCode,
+    categorie: [...selectedCats].join(', '),
+    note: document.getElementById('f-note').value.trim(),
+    data: new Date().toLocaleDateString('it-IT'),
+    action: editId ? 'update' : 'add'
+  };
+
+  if (!scriptUrl) {
+    saveToCache(item);
+    toast(editId ? 'Modificato (solo locale)' : 'Salvato (solo locale)');
+    resetForm();
+    return;
+  }
+
+  toast('Salvataggio...');
+  try {
+    await fetch(scriptUrl, {
+      method: 'POST',
+      body: JSON.stringify(item)
+    });
+    saveToCache(item);
+    toast(editId ? 'Modificato!' : 'Salvato!');
+    resetForm();
+    updateItemCount();
+  } catch(e) {
+    saveToCache(item);
+    toast('Salvato in locale (offline)');
+    resetForm();
+  }
+}
+
+async function deleteItem(id) {
+  if (!confirm('Eliminare questo elemento?')) return;
+  cachedItems = cachedItems.filter(i => i.id !== id);
+  localStorage.setItem('officina_cache', JSON.stringify(cachedItems));
+  updateItemCount();
+  doSearch();
+  if (scriptUrl) {
+    try { await fetch(scriptUrl, { method:'POST', body: JSON.stringify({action:'delete', id}) }); } catch(e){}
+  }
+  toast('Eliminato');
+}
+
+function editItem(id) {
+  const item = cachedItems.find(i => i.id === id);
+  if (!item) return;
+  editId = id;
+  switchTab('aggiungi');
+  document.getElementById('f-nome').value = item.nome || '';
+  document.getElementById('f-qty').value = item.qty || 1;
+  document.getElementById('f-unita').value = item.unita || 'pz';
+  document.getElementById('f-dim').value = item.dimensioni || '';
+  document.getElementById('f-note').value = item.note || '';
+  if (item.zona) {
+    document.getElementById('f-zona').value = item.zona;
+    updateContenitore();
+    if (item.pos_codice) document.getElementById('f-pos').value = item.pos_codice;
+  }
+  selectedCats = new Set(item.categorie ? item.categorie.split(',').map(c=>c.trim()).filter(Boolean) : []);
+  document.querySelectorAll('.checkbox-item').forEach(el => {
+    const label = el.querySelector('.checkbox-label').textContent;
+    el.classList.toggle('checked', selectedCats.has(label));
+  });
+  const banner = document.getElementById('edit-banner');
+  banner.style.display = 'flex';
+}
+
+function resetForm() {
+  editId = null;
+  document.getElementById('f-nome').value = '';
+  document.getElementById('f-qty').value = 1;
+  document.getElementById('f-unita').value = 'pz';
+  document.getElementById('f-dim').value = '';
+  document.getElementById('f-note').value = '';
+  document.getElementById('f-zona').value = '';
+  document.getElementById('f-pos').innerHTML = '<option value="">— prima la zona —</option>';
+  selectedCats.clear();
+  document.querySelectorAll('.checkbox-item').forEach(el => el.classList.remove('checked'));
+  document.getElementById('edit-banner').style.display = 'none';
+}
+
+// ---- CACHE ----
+function loadCache() {
+  const raw = localStorage.getItem('officina_cache');
+  if (raw) {
+    try { cachedItems = JSON.parse(raw); } catch(e) { cachedItems = []; }
+  }
+  updateItemCount();
+  updateCacheCount();
+}
+
+function saveToCache(item) {
+  const idx = cachedItems.findIndex(i => i.id === item.id);
+  if (idx >= 0) cachedItems[idx] = item;
+  else cachedItems.push(item);
+  localStorage.setItem('officina_cache', JSON.stringify(cachedItems));
+  updateItemCount();
+  updateCacheCount();
+}
+
+function updateItemCount() {
+  document.getElementById('item-count').textContent = cachedItems.length
+    ? `${cachedItems.length} oggetti`
+    : '—';
+}
+function updateCacheCount() {
+  document.getElementById('cache-count').textContent = cachedItems.length;
+}
+
+async function refreshCache() {
+  if (!scriptUrl) { toast('Configura prima l\'URL'); return; }
+  toast('Aggiornamento...');
+  try {
+    const r = await fetch(scriptUrl);
+    const data = await r.json();
+    cachedItems = data.items || [];
+    localStorage.setItem('officina_cache', JSON.stringify(cachedItems));
+    updateItemCount();
+    updateCacheCount();
+    toast(`Aggiornati ${cachedItems.length} elementi`);
+  } catch(e) {
+    toast('Errore di connessione');
+  }
+}
+
+function clearCache() {
+  if (!confirm('Cancellare la cache locale?')) return;
+  cachedItems = [];
+  localStorage.removeItem('officina_cache');
+  updateItemCount();
+  updateCacheCount();
+  toast('Cache cancellata');
+}
+
+// ---- CONFIG ----
+function saveConfig() {
+  scriptUrl = document.getElementById('cfg-url').value.trim();
+  localStorage.setItem('officina_url', scriptUrl);
+  toast('URL salvato');
+}
+
+async function testConnection() {
+  const url = document.getElementById('cfg-url').value.trim();
+  const el = document.getElementById('conn-status');
+  el.innerHTML = '<span class="dot"></span> Test in corso...';
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    const n = (data.items||[]).length;
+    el.innerHTML = `<span class="dot ok"></span> Connesso — ${n} elementi nel foglio`;
+    cachedItems = data.items || [];
+    localStorage.setItem('officina_cache', JSON.stringify(cachedItems));
+    updateItemCount();
+    updateCacheCount();
+  } catch(e) {
+    el.innerHTML = '<span class="dot err"></span> Connessione fallita — controlla l\'URL';
+  }
+}
+
+// ---- TOAST ----
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+init();
+</script>
+</body>
+</html>
